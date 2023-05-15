@@ -128,7 +128,8 @@ void addSiblingItem(Cnode *root,char value[],int type)
 }
 
 //查找当前目录下是否有对应的目录或者文件,就是查找当前结点的兄弟结点中是否有对应的文件或目录
-int searchlocalItem(Cnode* node, char value[]) 
+//返回NULL 说明没有，找到了，返回path 
+Cnode* searchlocalItem(Cnode* node, char value[],char path[]) 
 {
     if(node->Sibling==NULL) return -1;
     Cnode *temp =node->Sibling;
@@ -141,7 +142,8 @@ int searchlocalItem(Cnode* node, char value[])
     return -1;
 }
 //从根目录查找是否有对应的目录或文件
-int searchtillItem(Cnode * root,char value[],char path[]) 
+//没有找到就返回NULL，找到了就返回PATH
+Cnode* searchtillItem(Cnode * root,char value[],char path[]) 
 {
     if(root==NULL) return -1;
     int root_data = -1;
@@ -157,17 +159,13 @@ int searchtillItem(Cnode * root,char value[],char path[])
     }
 }
 
-//返回从根目录开始的路径名
-char * searchtillpath(Cnode *root,char value[])
-{
-    char path[MAX_NODE]; //设置长度为为所有结点总数
-    
-}
 
 //查找并删除特定结点 
-void deteleItem()
+//参数设置Cnode* node
+// value ? 
+void deteleItem(Cnode *node)
 {
-
+    //如果有孩子树的话,那么就需要
 }
 
 
