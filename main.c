@@ -3,7 +3,7 @@
 
 #define MAX_SIZE 10 
 
-typedef struct TreeNode{
+typedef struct TreeNode {
 	//文件名或者目录名
 	//如果是叶子结点，说明是最后的目录、文件
 	char *val;
