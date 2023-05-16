@@ -33,11 +33,17 @@ Cnode* CreateTree()
     if(strcmp(ch,"#") == 0) {
         T = NULL;
     }else {
-        if( !(T=(Cnode *)malloc(sizeof(Cnode)))) return NULL;
+        if( !(T=(Cnode *)malloc(sizeof(Cnode)))) return NULL;  
         strcpy(T->data,ch);
         T->type = type;
-        printf("创建%s的孩子树\n",ch);
-        T->lchild = CreateTree();    //生成最左子树的根结点;
+        if(type == 1) {
+            //是文件，那么直接就把孩子树赋值为NULL
+            printf("是文件，无孩子树\n");
+            T->lchild = NULL;
+        }else {
+            printf("创建%s的孩子树\n",ch);
+            T->lchild = CreateTree();    //生成最左子树的根结点;
+        }
         printf("创建%s的兄弟子树\n",ch);
         T->Sibling = CreateTree();   //生成右边第一个兄弟结点的指针
     }
@@ -131,43 +137,95 @@ void addSiblingItem(Cnode *root,char value[],int type)
 //返回NULL 说明没有，找到了，返回path 
 Cnode* searchlocalItem(Cnode* node, char value[],char path[]) 
 {
-    if(node->Sibling==NULL) return -1;
+    //先清空
+    strcpy(path," ");
+    if(node->Sibling==NULL) return NULL;
     Cnode *temp =node->Sibling;
     while(temp != NULL) {
-        if(strcmp(temp->data,value)==0){
-            return 1;
+        if(strcmp(temp->data,value) == 0){
+            strcpy(path,"./");
+            strcat(path,temp->data);
+            return temp;
         }
         temp = temp->Sibling;
     }   
-    return -1;
+    return NULL;
 }
 //从根目录查找是否有对应的目录或文件
 //没有找到就返回NULL，找到了就返回PATH
 Cnode* searchtillItem(Cnode * root,char value[],char path[]) 
 {
-    if(root==NULL) return -1;
-    int root_data = -1;
+    if(root==NULL) return NULL;
     if(strcmp(root->data,value)==0) {
-        return 1;
+        // strcat(path,"/");
+        // strcat(path,root->data);
+        return root;
     }
-    int lchild = searchtillItem(root->lchild);
-    int sibling = searchtillItem(root->Sibling);
-    if(lchild == 1 || sibling == 1){
-        return 1;
-    }else{
-        return -1;
+    //先查兄弟结点
+    Cnode* si = searchtillItem(root->Sibling,value,path);
+    if(si!=NULL) {
+        strcat(path,"/");
+        strcat(path,si->data);
+        return si;
     }
+    Cnode* lc = searchtillItem(root->lchild,value,path);
+    if(lc != NULL) {
+        //查找到了是在孩子树中
+        strcat(path,"/");
+        //添加当前目录
+        strcat(path,root->data);
+        strcat(path,"/");
+        strcat(path,lc->data);
+        return lc;
+    } 
+    //当前结点下找到不到这个文件
+    return NULL;
+    
 }
 
 
-//查找并删除特定结点 
-//参数设置Cnode* node
-// value ? 
-void deteleItem(Cnode *node)
+//查找并删除特定结点
+//type 1 是文件，type 0 是目录 
+void deteleItem(Cnode *root,char value[],int type)
 {
-    //如果有孩子树的话,那么就需要
+    //从根目录开始找目录或者文件
+    //考虑删除目录为空和文件，则直接删除，并维护兄弟链不断开
+    //考虑目录非空，则维护兄弟链不断开
+    //对于孩子树中的结点，询问是否将以下内容全部删除 Y/N 
+    //Y 使用delete 
+    //N 则是递归处理（先处理兄弟，再处理孩子，最后处理自己）
+
+    //判断处理基准条件
+    if(root==NULL) return;
+    if(strcmp(root->data,value)==0 && root->type == type ) {
+        deleteTree(root);
+        if(type==1) {
+            deletefile(root);
+        }else {
+            deletedictory();
+        }
+        // printf("已经删除%s下的所有内容\n",value);
+        return;
+    }else if(strcmp(root->data,value) == 0) {
+        printf("请检查是否存在type错误\n");
+        return;
+    }
+    deteleItem(root->lchild,value,type);
+    deteleItem(root->Sibling,value,type);
+
+    //递归处理其余条件
+
+}
+void deletedictory(Cnode *root)
+{
+    if(root->)
 }
 
+void deletefile(Cnode *node)
+{
+    free(node);
+    return;
+}
 
 //只是打印出当前结点的孩子结点
 void printchild(Cnode *root) 
