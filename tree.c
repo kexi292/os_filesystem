@@ -16,6 +16,9 @@ typedef struct node
     struct node *Sibling;// 指向右边第一个兄弟结点的指针。
 }Cnode;
 
+//树
+Cnode * Tree;
+
 //创建树
 Cnode* CreateTree()
 {
@@ -24,10 +27,9 @@ Cnode* CreateTree()
     char y;
     Cnode *T;
     printf("%s\n","请输入结点值,#代表空");
-    scanf("%s",ch);
-    printf("%s\n","是否是文件 Y/N");
-    scanf("%c",&y);
+    scanf("%s %c",ch,&y);getchar();
     if(y == 'y' || y == 'Y') {
+        printf("创建文件\n");
         type = 1;
     }
     if(strcmp(ch,"#") == 0) {
@@ -54,9 +56,8 @@ void preorderTest(Cnode *root)
 {
     if(root) 
     {
-        printf("结点值%s\n",root->data);
+        printf(" %s\n",root->data);
         Cnode * temp = root->lchild;
-        printf("-------------\n");
         while(temp!=NULL) {
             if(temp->type == 0) {
                 printf("        目录---%s\n",temp->data);
@@ -68,6 +69,36 @@ void preorderTest(Cnode *root)
         preorderTest(root->lchild); //遍历子树的结点。
         preorderTest(root->Sibling); //遍历兄弟结点的指针
     }
+}
+//适用于取到最后一个子结点，e.g g h f 取到f
+Cnode * searchfinalchild(Cnode *root)
+{
+    if(root == NULL) return NULL;
+    if(root->lchild == NULL) return NULL;
+    root = root->lchild;
+    while(root!=NULL) {
+        if(root->Sibling == NULL) {
+            break;
+        }
+        root = root->Sibling;
+    }
+    return root;
+}
+
+
+//用于取到当前结点最右的兄弟结点
+Cnode * searchfinalSibling(Cnode * root) 
+{
+    if(root == NULL) return NULL;
+    if(root->Sibling == NULL) return NULL;
+    root = root->Sibling;
+    while(root != NULL) {
+        if(root->Sibling == NULL) {
+            break;
+        } 
+        root = root->Sibling;
+    }
+    return root;
 }
 //层序遍历整课树，思路在于把当前结点输出，把孩子结点入队
 void printAllTree(Cnode *root)
@@ -109,7 +140,7 @@ void addChildItem(Cnode *root,char value[],int type) {
     if(temp == NULL) {
         root->lchild = T;
     }else{
-        temp->Sibling = T
+        temp->Sibling = T;
     }
     return;
 }
@@ -153,34 +184,61 @@ Cnode* searchlocalItem(Cnode* node, char value[],char path[])
 }
 //从根目录查找是否有对应的目录或文件
 //没有找到就返回NULL，找到了就返回PATH
-Cnode* searchtillItem(Cnode * root,char value[],char path[]) 
+//value[] 要查找的字符串，path[] 找到后的路径存放在这里， ispath 是否要合并路径 y -> 1  N -> 0
+Cnode* searchtillItem(Cnode * root,char value[],int type,char path[],int ispath) 
 {
     if(root==NULL) return NULL;
-    if(strcmp(root->data,value)==0) {
+    if(strcmp(root->data,value) == 0 && root->type == type) {
         // strcat(path,"/");
         // strcat(path,root->data);
         return root;
     }
     //先查兄弟结点
-    Cnode* si = searchtillItem(root->Sibling,value,path);
+    Cnode* si = searchtillItem(root->Sibling,value,type,path,ispath);
     if(si!=NULL) {
-        strcat(path,"/");
-        strcat(path,si->data);
+        if(ispath) { 
+            strcat(path,"/"); 
+            strcat(path,si->data); 
+        }
         return si;
     }
-    Cnode* lc = searchtillItem(root->lchild,value,path);
+    Cnode* lc = searchtillItem(root->lchild,value,type,path,ispath);
     if(lc != NULL) {
-        //查找到了是在孩子树中
-        strcat(path,"/");
-        //添加当前目录
-        strcat(path,root->data);
-        strcat(path,"/");
-        strcat(path,lc->data);
+        if(ispath) { 
+            //查找到了是在孩子树中
+            strcat(path,"/");
+            //添加当前目录
+            strcat(path,root->data);
+            strcat(path,"/");
+            strcat(path,lc->data);
+        }
         return lc;
     } 
     //当前结点下找到不到这个文件
     return NULL;
     
+}
+
+//从根目录处开始查找，但是返回的不是目标结点，而是前序遍历来说的目标结点的前一个结点
+Cnode* searchPreTill(Cnode*root,char value[],int type) {
+    if(root == NULL) return NULL;
+    if(root->lchild!=NULL && root->lchild->type == type && strcmp(root->lchild->data,value) == 0 ) 
+    {
+        printf("找到了%s的前驱%s\n",value,root->data);
+        return root;
+    }else if (root->Sibling !=NULL && root->Sibling->type == type && strcmp(root->Sibling->data,value) == 0) 
+    {
+        printf("找到了%s的前驱%s\n",value,root->data);
+        return root;
+    }
+    Cnode * temp = searchPreTill(root->lchild,value,type);
+    Cnode* temp2 = searchPreTill(root->Sibling,value,type);
+    if(temp!=NULL) {
+        return temp;
+    }else if(temp2!=NULL) {
+        return temp2;
+    }
+    return NULL;
 }
 
 
@@ -195,37 +253,52 @@ void deteleItem(Cnode *root,char value[],int type)
     //Y 使用delete 
     //N 则是递归处理（先处理兄弟，再处理孩子，最后处理自己）
 
-    //判断处理基准条件
     if(root==NULL) return;
-    if(strcmp(root->data,value)==0 && root->type == type ) {
-        deleteTree(root);
-        if(type==1) {
-            deletefile(root);
-        }else {
-            deletedictory();
+    //search Node where Node->lchild->data is value or Node->Sibling->data is value 
+    Cnode* temp = searchPreTill(root,value,type);
+    // Cnode * temp = NULL;
+    if( temp != NULL ) {
+        Cnode * cur = NULL;
+        if(temp->lchild!=NULL && temp->lchild->type ==type && strcmp(temp->lchild->data,value) == 0) {
+            cur = temp->lchild;
+            //cur就是目前要删除的结点，temp结点就是前序遍历的前一个结点，此处temp=>lchild = cur
+            temp->lchild= cur->Sibling; //把兄弟结点链接到lchild上
+            Cnode * finalSibling = searchfinalSibling(cur->Sibling);
+            if(finalSibling == NULL) {
+                //cur 就是temp唯一的子节点
+                temp->lchild = cur->lchild;
+            }else {
+                //把当前结点的子树全部改为temp的子节点
+                finalSibling->Sibling = cur->lchild;
+            }
+            printf("释放%s的内存空间\n",cur->data);
+            free(cur);
         }
-        // printf("已经删除%s下的所有内容\n",value);
-        return;
-    }else if(strcmp(root->data,value) == 0) {
-        printf("请检查是否存在type错误\n");
+        if(temp->Sibling!=NULL && temp->Sibling->type == type && strcmp(temp->Sibling->data,value) == 0) {
+            cur = temp->Sibling;
+            //cur   temp是cur的兄弟结点
+            temp->Sibling = cur->Sibling;
+            Cnode * finalSibling = searchfinalSibling(cur->Sibling);
+            if(finalSibling==NULL) {
+                //cur 就是temp 之后唯一的兄弟结点
+                //把cur的孩子树连到原先的链尾
+                temp->Sibling = cur->lchild;
+            }else{
+                //把cur的孩子树全部连成原先的兄弟结点
+                finalSibling->Sibling = cur->lchild;
+            }
+            printf("释放%s的内存空间\n",cur->data);
+            free(cur);
+        }
+    }else {
+        printf("没有对应的文件或目录,请检查type是否错误\n");
         return;
     }
-    deteleItem(root->lchild,value,type);
-    deteleItem(root->Sibling,value,type);
-
-    //递归处理其余条件
 
 }
-void deletedictory(Cnode *root)
-{
-    if(root->)
-}
 
-void deletefile(Cnode *node)
-{
-    free(node);
-    return;
-}
+
+
 
 //只是打印出当前结点的孩子结点
 void printchild(Cnode *root) 
@@ -250,49 +323,91 @@ void deleteTree(Cnode *root)
     if(root) {
         deleteTree(root->lchild);
         deleteTree(root->Sibling);
+        printf("释放%s的内存空间\n",root->data);
         free(root);
     }
 }
-//适用于取到最后一个子结点，e.g g h f 取到f
-Cnode * searchfinalchild(Cnode *root)
-{
-    if(root->lchild == NULL) return NULL;
-    root = root->lchild;
-    while(root!=NULL) {
-        if(root->Sibling == NULL) {
-            break;
-        }
-        root = root->Sibling;
-    }
-    return root;
-}
 
-//用于取到当前结点最右的兄弟结点
-Cnode * searchfinalSibling(Cnode * root) 
-{
-    if(root->Sibling == NULL) return NULL;
-    root = root->Sibling;
-    while(root != NULL) {
-        if(root->Sibling == NULL) {
-            break;
-        } 
-        root = root->Sibling;
-    }
-    return root;
-}
 
 
 int main() {
     printf("%s\n","---------创建目录----------");
     //搭建目录
-    Cnode* root = CreateTree();
+    Tree = CreateTree();
 
-    printf("%s\n","---------遍历整课树--------");
-    //遍历整个树
-    preorderTest(root);
+    printf("-----------打印所有目录-----------------\n");
+    preorderTest(Tree);
+    while(1) {
+        printf("进入测试:\n 输入 mkdir 创建文件或目录\n 输入 cd 跳转到对应目录中去\n 输入 rm 删除对应目录或文件\n 输入 quit 结束测试\n");
+        char com[MAX_NODE];
+        char path[MAX_NODE];
+        scanf("%s",com);
+        if(strcmp(com,"mkdir") == 0) {
+            char argscd[MAX_NODE];
+            char argsmkdir[MAX_NODE];
+            int type;
+            char ch;
+            printf("---------创建文件或目录----------\n");
+            printf("现在在根目录位置,请跳转到所以需目录处\n");
+            Cnode * cur;
+            do {
+                printf("%s\n","请输入指定参数, name  ");
+                scanf("%s",argscd);
+                cur = searchtillItem(Tree,argscd,0,path,1);
+            }while(cur == NULL);
+            printf("当前路径为: %s\n",path);
+            printf("请输入指定参数 name type\n");
+            printf("help -- type 1 是文件  0 是目录\n");
+            scanf("%s %d",argsmkdir,&type);
+            printf("创建为兄弟目录或文件 Y/N ? \n");
+            scanf(" %c",&ch);
+            if(ch == 'Y' || ch == 'y') {
+                addSiblingItem(cur,argsmkdir,type);
+            }else {
+                addChildItem(cur,argsmkdir,type);
+            }
+            printf("-----------打印所有目录-----------------\n");
+            preorderTest(Tree);
+
+        }else if( strcmp(com,"cd") == 0) {
+            printf("%s\n","---------跳转到对应的目录中去-------");
+            printf("%s\n","请输入指定参数, name type");
+            printf("%s\n","type --help  1 为文件 0 为目录");
+            char argscd[MAX_NODE]; 
+            int type = 0;
+            char path[MAX_NODE];
+            Cnode * cur;
+            do {
+                printf("%s\n","请输入指定参数, name ");
+                scanf("%s %d",argscd,&type);
+                cur = searchtillItem(Tree,argscd,type,path,1);
+            }while(cur == NULL);
+            printf("路径为: %s\n",path);
+            printf("-----------当前目录--------------------\n");
+            preorderTest(cur);
+            printf("-----------打印所有目录 -----------------\n");
+            preorderTest(Tree);
+
+        }else if( strcmp(com,"rm") == 0) {
+            printf("-----------删除对应文件或目录-----------\n");
+            printf("请输入指定参数, name type\n");
+            printf("%s\n","type --help  1 为文件 0 为目录");
+            char argsrm[MAX_NODE];
+            int type;
+            scanf("%s %d",argsrm,&type);
+            deteleItem(Tree,argsrm,type);
+            printf("------------打印所有目录-----------------\n");
+            preorderTest(Tree);
+        }else if( strcmp(com,"quit") == 0) {
+            break;
+        }else {
+            printf("输入错误指令 请检查大小写\n");
+        }
+        
+    }
 
     printf("%s\n","----------释放空间---------");
     //释放空间
-    deleteTree(root);
+    deleteTree(Tree);
     return 0;
 }
