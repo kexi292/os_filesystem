@@ -166,21 +166,30 @@ void addSiblingItem(Cnode *root,char value[],int type)
 
 //查找当前目录下是否有对应的目录或者文件,就是查找当前结点的兄弟结点中是否有对应的文件或目录
 //返回NULL 说明没有，找到了，返回path 
-Cnode* searchlocalItem(Cnode* node, char value[],char path[]) 
+int searchlocalItem(Cnode* node, char value[],int type) 
 {
     //先清空
-    strcpy(path," ");
-    if(node->Sibling==NULL) return NULL;
-    Cnode *temp =node->Sibling;
-    while(temp != NULL) {
-        if(strcmp(temp->data,value) == 0){
-            strcpy(path,"./");
-            strcat(path,temp->data);
-            return temp;
-        }
-        temp = temp->Sibling;
-    }   
-    return NULL;
+    if(node == NULL ) return -1;
+    if(strcmp(node->data,value)==0 && node->type == type) {
+        return 1;
+    }
+    int lc = searchlocalItem(node->lchild,value,type);
+    int si = searchlocalItem(node->Sibling,value,type);
+    if(lc == 1 || si == 1) {
+        return 1;
+    }else {
+        return -1;
+    }
+}
+//检查兄弟结点中是否存在结点
+int searchissib(Cnode* node,char value[],int type) 
+{
+    if(node ==NULL) return -1;
+    if(strcmp(node->data,value)==0 && node->type == type) {
+        return 1;
+    }
+    return searchissib(node->Sibling,value,type);
+    
 }
 //从根目录查找是否有对应的目录或文件
 //没有找到就返回NULL，找到了就返回PATH
@@ -189,32 +198,38 @@ Cnode* searchtillItem(Cnode * root,char value[],int type,char path[],int ispath)
 {
     if(root==NULL) return NULL;
     if(strcmp(root->data,value) == 0 && root->type == type) {
-        // strcat(path,"/");
-        // strcat(path,root->data);
+        strcat(path,"/"); 
+        strcat(path,root->data); 
         return root;
-    }
-    //先查兄弟结点
-    Cnode* si = searchtillItem(root->Sibling,value,type,path,ispath);
-    if(si!=NULL) {
-        if(ispath) { 
-            strcat(path,"/"); 
-            strcat(path,si->data); 
-        }
-        return si;
-    }
-    Cnode* lc = searchtillItem(root->lchild,value,type,path,ispath);
-    if(lc != NULL) {
-        if(ispath) { 
+    }else {
+        if( searchissib(root,value,type)!=1 && searchlocalItem(root,value,type)) {
             //查找到了是在孩子树中
             strcat(path,"/");
             //添加当前目录
             strcat(path,root->data);
-            strcat(path,"/");
-            strcat(path,lc->data);
         }
-        return lc;
-    } 
-    //当前结点下找到不到这个文件
+    }
+    
+    //先查兄弟结点
+    Cnode* si = searchtillItem(root->Sibling,value,type,path,ispath);
+    if(si!=NULL) return si;
+    // if(si!=NULL) {
+    //     if(ispath) { 
+    //         strcat(path,"/"); 
+    //         strcat(path,si->data); 
+    //     }
+    //     return si;
+    // }
+    Cnode* lc = searchtillItem(root->lchild,value,type,path,ispath);
+    if(lc !=NULL) return lc;
+    // if(lc != NULL) {
+    //     if(ispath) { 
+            
+    //         strcat(path,"/");
+    //         strcat(path,lc->data);
+    //     }
+    //     return lc;
+    // } 
     return NULL;
     
 }
@@ -341,10 +356,12 @@ int main() {
         printf("进入测试:\n 输入 mkdir 创建文件或目录\n 输入 cd 跳转到对应目录中去\n 输入 rm 删除对应目录或文件\n 输入 quit 结束测试\n");
         char com[MAX_NODE];
         char path[MAX_NODE];
+        memset(path,'\0',sizeof(path));
         scanf("%s",com);
         if(strcmp(com,"mkdir") == 0) {
             char argscd[MAX_NODE];
             char argsmkdir[MAX_NODE];
+            memset(path,'\0',sizeof(path));
             int type;
             char ch;
             printf("---------创建文件或目录----------\n");
@@ -375,10 +392,10 @@ int main() {
             printf("%s\n","type --help  1 为文件 0 为目录");
             char argscd[MAX_NODE]; 
             int type = 0;
-            char path[MAX_NODE];
+            memset(path,'\0',sizeof(path));
             Cnode * cur;
             do {
-                printf("%s\n","请输入指定参数, name ");
+                printf("%s\n","请输入指定参数, name type");
                 scanf("%s %d",argscd,&type);
                 cur = searchtillItem(Tree,argscd,type,path,1);
             }while(cur == NULL);
