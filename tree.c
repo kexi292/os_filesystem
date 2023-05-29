@@ -165,7 +165,8 @@ void addSiblingItem(Cnode *root,char value[],int type)
     }
 }
 
-//查找当前目录下是否有对应的目录或者文件,就是查找当前结点的兄弟结点中是否有对应的文件或目录
+//查找当前目录下是否有对应的目录或者文件,
+//就是查找当前结点的兄弟结点中是否有对应的文件或目录
 //返回NULL 说明没有，找到了，返回path 
 int searchlocalItem(Cnode* node, char value[],int type) 
 {
@@ -194,8 +195,9 @@ int searchissib(Cnode* node,char value[],int type)
 }
 //从根目录查找是否有对应的目录或文件
 //没有找到就返回NULL，找到了就返回PATH
-//value[] 要查找的字符串，path[] 找到后的路径存放在这里， ispath 是否要合并路径 y -> 1  N -> 0
-Cnode* searchtillItem(Cnode * root,char value[],int type,char path[],int ispath) 
+//value[] 要查找的字符串，
+//path[] 找到后的路径存放在这里
+Cnode* searchtillItem(Cnode * root,char value[],int type,char path[]) 
 {
     if(root==NULL) return NULL;
     if(strcmp(root->data,value) == 0 && root->type == type) {
@@ -213,25 +215,11 @@ Cnode* searchtillItem(Cnode * root,char value[],int type,char path[],int ispath)
     }
     
     //先查兄弟结点
-    Cnode* si = searchtillItem(root->Sibling,value,type,path,ispath);
+    Cnode* si = searchtillItem(root->Sibling,value,type,path);
     if(si!=NULL) return si;
-    // if(si!=NULL) {
-    //     if(ispath) { 
-    //         strcat(path,"/"); 
-    //         strcat(path,si->data); 
-    //     }
-    //     return si;
-    // }
-    Cnode* lc = searchtillItem(root->lchild,value,type,path,ispath);
+    Cnode* lc = searchtillItem(root->lchild,value,type,path);
     if(lc !=NULL) return lc;
-    // if(lc != NULL) {
-    //     if(ispath) { 
-            
-    //         strcat(path,"/");
-    //         strcat(path,lc->data);
-    //     }
-    //     return lc;
-    // } 
+ 
     return NULL;
     
 }
@@ -266,9 +254,6 @@ void deteleItem(Cnode *root,char value[],int type)
     //从根目录开始找目录或者文件
     //考虑删除目录为空和文件，则直接删除，并维护兄弟链不断开
     //考虑目录非空，则维护兄弟链不断开
-    //对于孩子树中的结点，询问是否将以下内容全部删除 Y/N 
-    //Y 使用delete 
-    //N 则是递归处理（先处理兄弟，再处理孩子，最后处理自己）
 
     if(root==NULL) return;
     //search Node where Node->lchild->data is value or Node->Sibling->data is value 
@@ -372,7 +357,7 @@ int main() {
             do {
                 printf("%s\n","请输入指定参数, name  ");
                 scanf("%s",argscd);
-                cur = searchtillItem(Tree,argscd,0,path,1);
+                cur = searchtillItem(Tree,argscd,0,path);
             }while(cur == NULL);
             printf("当前路径为: %s\n",path);
             printf("请输入指定参数 name type\n");
@@ -399,7 +384,7 @@ int main() {
             do {
                 printf("%s\n","请输入指定参数, name type");
                 scanf("%s %d",argscd,&type);
-                cur = searchtillItem(Tree,argscd,type,path,1);
+                cur = searchtillItem(Tree,argscd,type,path);
             }while(cur == NULL);
             printf("路径为: %s\n",path);
             printf("-----------当前目录--------------------\n");
