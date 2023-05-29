@@ -26,7 +26,8 @@ Cnode* CreateTree()
     int type = 0;
     char y;
     Cnode *T;
-    printf("%s\n","请输入结点值,#代表空");
+    //例如:a n -> 创建一个目录为a;   b y -> 创建一个文件为b;  # # 表示空
+    printf("%s\n","请输入结点值 和 是否创建为文件,#代表空,y代表是文件");
     scanf("%s %c",ch,&y);getchar();
     if(y == 'y' || y == 'Y') {
         printf("创建文件\n");
@@ -202,6 +203,7 @@ Cnode* searchtillItem(Cnode * root,char value[],int type,char path[],int ispath)
         strcat(path,root->data); 
         return root;
     }else {
+        // 
         if( searchissib(root,value,type)!=1 && searchlocalItem(root,value,type)) {
             //查找到了是在孩子树中
             strcat(path,"/");
